@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Criteria & Alternatives Wizard - Optitest</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 text-gray-800 min-h-screen flex flex-col">
+
+  <!-- Top Navigation / Header -->
+  <header class="bg-white border-b border-gray-200 shadow-md">
+    <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+      <!-- Logo + Tool Name (Left Corner) -->
+      <div class="flex items-center space-x-4">
+        <img 
+          src="{{ url_for('static', filename='logo_optitest.png') }}" 
+          alt="Optitest Logo" 
+          class="w-20 h-20 object-cover"
+        >
+        <h1 class="text-3xl font-bold">Optitest+</h1>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <div class="flex flex-1">
+
+    <!-- Sidebar -->
+    <aside class="hidden md:flex flex-col w-64 bg-white border-r border-gray-200 shadow-md">
+      <nav class="flex-1 p-6 space-y-4">
+        <ul class="space-y-3 text-lg font-medium">
+          <li>
+            <a href="{{ url_for('dashboard') }}" class="block p-3 rounded hover:bg-gray-100 flex items-center">
+              🏠 Opti Home
+            </a>
+          </li>
+          <li>
+            <a href="{{ url_for('preprocessing_page') }}" class="block p-3 rounded hover:bg-gray-100 flex items-center">
+              ⚙️ Preprocessing
+            </a>
+          </li>
+          <li>
+            <a href="{{ url_for('results') }}" class="block p-3 rounded hover:bg-gray-100 flex items-center">
+              📊 Results
+            </a>
+          </li>
+        </ul>
+      </nav>
+      <div class="p-6 border-t border-gray-200 text-sm text-gray-400">
+        © 2025 Optitest+
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 p-6">
+      <h2 class="text-2xl font-bold mb-4">Criteria & Alternatives</h2>
+      <p class="text-lg text-gray-600 mb-6">
+        Follow the steps below to select criteria, then alternatives, and finally assign fuzzy weights.
+      </p>
+
+      <form method="POST" id="wizardForm" action="{{ url_for('criteria_alternatives_page') }}">
+
+        <!-- STEP 1: Criteria -->
+        <div id="step1" class="bg-white rounded shadow p-4 mb-6">
+          <h3 class="text-xl font-semibold mb-3">Step 1: Select Criteria</h3>
+          <div id="criteriaList" class="space-y-2 mb-4">
+            <!-- Rows will be inserted here via JS -->
+          </div>
+          <div class="flex space-x-2 mb-4">
+            <button 
+              type="button"
+              class="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700"
+              onclick="addCriteriaRow()"
+            >
+              + Add More Criteria
+            </button>
+            <button 
+              type="button"
+              class="bg-gray-600 text-white px-3 py-1 rounded hover:bg-gray-700"
+              onclick="addCustomCriteriaPrompt()"
+            >
+              + Add Custom Criteria
+            </button>
+          </div>
+          <button 
+            type="button"
+            class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+            onclick="confirmStep1()"
+          >
+            Confirm Criteria
+          </button>
+        </div>
+
+        <!-- STEP 2: Alternatives (hidden until Step 1 confirmed) -->
+        <div id="step2" class="bg-white rounded shadow p-4 mb-6 hidden">
+          <h3 class="text-xl font-semibold mb-3">Step 2: Select Alternatives</h3>
+          <div id="alternativeList" class="space-y-2 mb-4"></div>
+          <div class="flex space-x-2 mb-4">
+            <button 
+              type="button"
+              class="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700"
+              onclick="addAlternativeRow()"
+            >
+              + Add More Alternatives
+            </button>
+            <button 
+              type="button"
+              class="bg-gray-600 text-white px-3 py-1 rounded hover:bg-gray-700"
+              onclick="addCustomAlternativePrompt()"
+            >
+              + Add Custom Alternative
+            </button>
+          </div>
+          <button 
+            type="button"
+            class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+            onclick="confirmStep2()"
+          >
+            Confirm Alternatives
+          </button>
+        </div>
+
+        <!-- STEP 3: FAHP Weights (hidden until Step 2 confirmed) -->
+        <div id="step3" class="bg-white rounded shadow p-4 mb-6 hidden">
+          <h3 class="text-xl font-semibold mb-3">Step 3: Assign Fuzzy Weights</h3>
+          <p class="text-gray-700 mb-4">
+            For each (alternative, criterion) pair, select a fuzzy scale value.
+          </p>
+          <div id="weightsContainer" class="overflow-auto"></div>
+          <!-- "Run FAHP" button triggers progress modal, then form submission -->
+          <button 
+            type="button"
+            class="mt-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+            onclick="startFAHPProcess()"
+          >
+            Run FAHP
+          </button>
+        </div>
+
+      </form>
+    </main>
+  </div>
+
+  <!-- FAHP Progress Modal -->
+  <div 
+    id="fahpModal" 
+    class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden"
+  >
+    <div class="bg-white rounded-lg w-full max-w-lg p-8">
+      <h3 class="text-2xl font-bold mb-4" id="fahpStepTitle">Running FAHP...</h3>
+      <p class="text-lg text-gray-700 mb-4" id="fahpStepDesc">Just give us a moment to process your data.</p>
+      <div class="w-full bg-gray-200 h-6 rounded">
+        <div 
+          id="fahpProgressBar" 
+          class="bg-blue-900 h-6 rounded transition-all duration-700 ease-in-out" 
+          style="width: 0%;"
+        ></div>
+      </div>
+      <p id="fahpProgressPercent" class="mt-2 text-right text-lg text-gray-500">0%</p>
+    </div>
+  </div>
+
+  <!-- JavaScript: dynamic Criteria & Alternatives with default lists -->
+  <script>
+    // Provided by backend in the Jinja context
+    const DEFAULT_CRITERIA = {{ default_criteria|tojson }};
+    const DEFAULT_ALTERNATIVES = {{ default_alternatives|tojson }};
+
+    const fuzzyScale = [
+      { value: "equally_important", label: "equally_important" },
+      { value: "weakly_more_important", label: "weakly_more_important" },
+      { value: "fairly_more_important", label: "fairly_more_important" },
+      { value: "strongly_more_important", label: "strongly_more_important" },
+      { value: "absolutely_more_important", label: "absolutely_more_important" },
+      { value: "intermittent_2", label: "intermittent_2" },
+      { value: "intermittent_4", label: "intermittent_4" },
+      { value: "intermittent_6", label: "intermittent_6" },
+      { value: "intermittent_8", label: "intermittent_8" }
+    ];
+
+    let criteriaArray = [];
+    let alternativeArray = [];
+
+    function addCriteriaRow(selectedVal=null) {
+      const container = document.getElementById("criteriaList");
+      const rowDiv = document.createElement("div");
+      rowDiv.className = "flex items-center space-x-2";
+
+      const select = document.createElement("select");
+      select.className = "border rounded p-2";
+      select.name = "criteria_select";
+
+      DEFAULT_CRITERIA.forEach(optVal => {
+        const opt = document.createElement("option");
+        opt.value = optVal;
+        opt.textContent = optVal;
+        if (selectedVal && selectedVal === optVal) opt.selected = true;
+        select.appendChild(opt);
+      });
+
+      select.addEventListener("change", updateCriteriaArray);
+
+      const removeBtn = document.createElement("button");
+      removeBtn.type = "button";
+      removeBtn.className = "bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600";
+      removeBtn.textContent = "Remove";
+      removeBtn.onclick = () => {
+        container.removeChild(rowDiv);
+        updateCriteriaArray();
+      };
+
+      rowDiv.appendChild(select);
+      rowDiv.appendChild(removeBtn);
+      container.appendChild(rowDiv);
+
+      updateCriteriaArray();
+    }
+
+    function addCustomCriteriaPrompt() {
+      const input = prompt("Enter custom criterion name:");
+      if (input && input.trim() !== "") {
+        addCriteriaRow(input.trim());
+      }
+    }
+
+    function updateCriteriaArray() {
+      const container = document.getElementById("criteriaList");
+      const selects = container.querySelectorAll("select");
+      criteriaArray = Array.from(selects).map(sel => sel.value);
+    }
+
+    function confirmStep1() {
+      if (criteriaArray.length === 0) {
+        alert("Please select at least one criterion.");
+        return;
+      }
+      document.getElementById("step1").classList.add("hidden");
+      document.getElementById("step2").classList.remove("hidden");
+    }
+
+    function addAlternativeRow(selectedVal=null) {
+      const container = document.getElementById("alternativeList");
+      const rowDiv = document.createElement("div");
+      rowDiv.className = "flex items-center space-x-2";
+
+      const select = document.createElement("select");
+      select.className = "border rounded p-2";
+      select.name = "alternative_select";
+
+      DEFAULT_ALTERNATIVES.forEach(optVal => {
+        const opt = document.createElement("option");
+        opt.value = optVal;
+        opt.textContent = optVal;
+        if (selectedVal && selectedVal === optVal) opt.selected = true;
+        select.appendChild(opt);
+      });
+
+      select.addEventListener("change", updateAlternativeArray);
+
+      const removeBtn = document.createElement("button");
+      removeBtn.type = "button";
+      removeBtn.className = "bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600";
+      removeBtn.textContent = "Remove";
+      removeBtn.onclick = () => {
+        container.removeChild(rowDiv);
+        updateAlternativeArray();
+      };
+
+      rowDiv.appendChild(select);
+      rowDiv.appendChild(removeBtn);
+      container.appendChild(rowDiv);
+
+      updateAlternativeArray();
+    }
+
+    function addCustomAlternativePrompt() {
+      const input = prompt("Enter custom alternative name:");
+      if (input && input.trim() !== "") {
+        addAlternativeRow(input.trim());
+      }
+    }
+
+    function updateAlternativeArray() {
+      const container = document.getElementById("alternativeList");
+      const selects = container.querySelectorAll("select");
+      alternativeArray = Array.from(selects).map(sel => sel.value);
+    }
+
+    function confirmStep2() {
+      if (alternativeArray.length === 0) {
+        alert("Please select at least one alternative.");
+        return;
+      }
+      document.getElementById("step2").classList.add("hidden");
+      document.getElementById("step3").classList.remove("hidden");
+      buildWeightsTable();
+    }
+
+    function buildWeightsTable() {
+      const container = document.getElementById("weightsContainer");
+      container.innerHTML = "";
+
+      if (criteriaArray.length === 0 || alternativeArray.length === 0) {
+        container.textContent = "No criteria or alternatives found.";
+        return;
+      }
+
+      const table = document.createElement("table");
+      table.className = "min-w-full border border-gray-200";
+
+      // Table head
+      const thead = document.createElement("thead");
+      const headRow = document.createElement("tr");
+
+      let th = document.createElement("th");
+      th.className = "border p-2 bg-gray-100";
+      th.textContent = "";
+      headRow.appendChild(th);
+
+      criteriaArray.forEach(crit => {
+        th = document.createElement("th");
+        th.className = "border p-2 bg-gray-100 text-center";
+        th.textContent = crit;
+        headRow.appendChild(th);
+      });
+      thead.appendChild(headRow);
+      table.appendChild(thead);
+
+      // Table body
+      const tbody = document.createElement("tbody");
+      alternativeArray.forEach((alt, i) => {
+        const row = document.createElement("tr");
+
+        // Alternative name
+        const tdAlt = document.createElement("td");
+        tdAlt.className = "border p-2 bg-gray-50 font-medium";
+        tdAlt.textContent = alt;
+        row.appendChild(tdAlt);
+
+        criteriaArray.forEach((crit, j) => {
+          const td = document.createElement("td");
+          td.className = "border p-2 text-center";
+
+          const select = document.createElement("select");
+          select.name = `weight_${i}_${j}`;
+          select.className = "border rounded p-1";
+
+          fuzzyScale.forEach(fs => {
+            const opt = document.createElement("option");
+            opt.value = fs.value;
+            opt.textContent = fs.label;
+            select.appendChild(opt);
+          });
+
+          td.appendChild(select);
+          row.appendChild(td);
+        });
+        tbody.appendChild(row);
+      });
+      table.appendChild(tbody);
+      container.appendChild(table);
+    }
+
+    // Step-by-step FAHP progress
+    const fahpSteps = [
+      { title: "Pairwise Comparison", desc: "Building pairwise matrices..." },
+      { title: "Normalization", desc: "Normalizing fuzzy numbers..." },
+      { title: "Synthesizing Weights", desc: "Computing final weights..." },
+      { title: "Finalizing", desc: "Finalizing FAHP results..." }
+    ];
+    let currentStepIndex = 0;
+    let totalSteps = fahpSteps.length;
+
+    function startFAHPProcess() {
+      const modal = document.getElementById("fahpModal");
+      modal.classList.remove("hidden");
+      currentStepIndex = 0;
+      updateFahpStepUI();
+      runNextStep();
+    }
+
+    function runNextStep() {
+      if (currentStepIndex >= totalSteps) {
+        document.getElementById("wizardForm").submit();
+        return;
+      }
+      setTimeout(() => {
+        currentStepIndex++;
+        updateFahpStepUI();
+        runNextStep();
+      }, 1000);
+    }
+
+    function updateFahpStepUI() {
+      const stepTitle = document.getElementById("fahpStepTitle");
+      const stepDesc = document.getElementById("fahpStepDesc");
+      const progressBar = document.getElementById("fahpProgressBar");
+      const progressPercent = document.getElementById("fahpProgressPercent");
+
+      if (currentStepIndex < totalSteps) {
+        stepTitle.textContent = fahpSteps[currentStepIndex].title;
+        stepDesc.textContent = fahpSteps[currentStepIndex].desc;
+      } else {
+        stepTitle.textContent = "Finishing...";
+        stepDesc.textContent = "Finalizing FAHP results...";
+      }
+      const percent = Math.round((currentStepIndex / totalSteps) * 100);
+      progressBar.style.width = percent + "%";
+      progressPercent.textContent = percent + "%";
+    }
+
+    // Pre-populate some default rows
+    document.addEventListener("DOMContentLoaded", function() {
+      addCriteriaRow("Throughput");
+      addCriteriaRow("Latency");
+      addAlternativeRow("Homepage");
+      addAlternativeRow("Login");
+    });
+  </script>
+</body>
+</html>

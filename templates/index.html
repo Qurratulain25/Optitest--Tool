@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>FAHP Application</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-6">
+  <div class="max-w-3xl mx-auto bg-white rounded shadow p-6">
+    <h1 class="text-3xl font-bold mb-4">FAHP Application</h1>
+    <form action="/" method="POST" enctype="multipart/form-data">
+      
+      <!-- File Upload -->
+      <div class="mb-4">
+        <label for="file" class="block text-gray-700 font-semibold mb-2">
+          Upload Excel File:
+        </label>
+        <input type="file" name="file" id="file" class="border rounded w-full p-2" required>
+      </div>
+
+      <!-- Preprocess Toggle -->
+      <div class="mb-4">
+        <label for="preprocess" class="block text-gray-700 font-semibold mb-2">
+          Preprocess Data?
+        </label>
+        <select name="preprocess" id="preprocess" class="border rounded w-full p-2">
+          <option value="yes">Yes</option>
+          <option value="no" selected>No</option>
+        </select>
+      </div>
+
+      <!-- Criteria Section (Dynamic) -->
+      <div class="mb-4">
+        <h2 class="text-xl font-semibold mb-2">Criteria</h2>
+        <!-- Container where criteria rows are added -->
+        <div id="criteria-container" class="space-y-4"></div>
+        <div class="flex space-x-2 mt-2">
+          <button type="button" class="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700" onclick="addCriteriaRow()">
+            + Add Criteria Row
+          </button>
+          <button type="button" class="bg-gray-600 text-white px-3 py-1 rounded hover:bg-gray-700" onclick="addCustomCriteria()">
+            + Custom Criterion
+          </button>
+        </div>
+      </div>
+
+      <!-- Alternatives Section (Dynamic) -->
+      <div class="mb-4">
+        <h2 class="text-xl font-semibold mb-2">Alternatives</h2>
+        <!-- Container where alternative rows are added -->
+        <div id="alternatives-container" class="space-y-4"></div>
+        <div class="flex space-x-2 mt-2">
+          <button type="button" class="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700" onclick="addAlternativeRow()">
+            + Add Alternative Row
+          </button>
+          <button type="button" class="bg-gray-600 text-white px-3 py-1 rounded hover:bg-gray-700" onclick="addCustomAlternative()">
+            + Custom Alternative
+          </button>
+        </div>
+      </div>
+
+      <!-- Linguistic Weights for Main (Default) Criteria -->
+      <h3 class="text-xl font-semibold mt-6 mb-4">Select Linguistic Weights for Main Criteria</h3>
+      <!-- These drop-downs apply to the primary criteria that you expect to always be present -->
+      <div class="mb-4">
+        <label for="weight_Response_Time" class="block text-gray-700">
+          Weight for Response_Time:
+        </label>
+        <select name="weight_Response_Time" id="weight_Response_Time" class="border rounded w-full p-2">
+          <option value="equally_important">equally_important</option>
+          <option value="weakly_more_important">weakly_more_important</option>
+          <option value="fairly_more_important">fairly_more_important</option>
+          <option value="strongly_more_important">strongly_more_important</option>
+          <option value="absolutely_more_important">absolutely_more_important</option>
+          <option value="intermittent_2">intermittent_2</option>
+          <option value="intermittent_4">intermittent_4</option>
+          <option value="intermittent_6">intermittent_6</option>
+          <option value="intermittent_8">intermittent_8</option>
+        </select>
+      </div>
+      <div class="mb-4">
+        <label for="weight_Throughput" class="block text-gray-700">
+          Weight for Throughput:
+        </label>
+        <select name="weight_Throughput" id="weight_Throughput" class="border rounded w-full p-2">
+          <option value="equally_important">equally_important</option>
+          <option value="weakly_more_important">weakly_more_important</option>
+          <option value="fairly_more_important">fairly_more_important</option>
+          <option value="strongly_more_important">strongly_more_important</option>
+          <option value="absolutely_more_important">absolutely_more_important</option>
+          <option value="intermittent_2">intermittent_2</option>
+          <option value="intermittent_4">intermittent_4</option>
+          <option value="intermittent_6">intermittent_6</option>
+          <option value="intermittent_8">intermittent_8</option>
+        </select>
+      </div>
+      <div class="mb-4">
+        <label for="weight_Latency" class="block text-gray-700">
+          Weight for Latency:
+        </label>
+        <select name="weight_Latency" id="weight_Latency" class="border rounded w-full p-2">
+          <option value="equally_important">equally_important</option>
+          <option value="weakly_more_important">weakly_more_important</option>
+          <option value="fairly_more_important">fairly_more_important</option>
+          <option value="strongly_more_important">strongly_more_important</option>
+          <option value="absolutely_more_important">absolutely_more_important</option>
+          <option value="intermittent_2">intermittent_2</option>
+          <option value="intermittent_4">intermittent_4</option>
+          <option value="intermittent_6">intermittent_6</option>
+          <option value="intermittent_8">intermittent_8</option>
+        </select>
+      </div>
+      <div class="mb-4">
+        <label for="weight_Network_Load" class="block text-gray-700">
+          Weight for Network_Load:
+        </label>
+        <select name="weight_Network_Load" id="weight_Network_Load" class="border rounded w-full p-2">
+          <option value="equally_important">equally_important</option>
+          <option value="weakly_more_important">weakly_more_important</option>
+          <option value="fairly_more_important">fairly_more_important</option>
+          <option value="strongly_more_important">strongly_more_important</option>
+          <option value="absolutely_more_important">absolutely_more_important</option>
+          <option value="intermittent_2">intermittent_2</option>
+          <option value="intermittent_4">intermittent_4</option>
+          <option value="intermittent_6">intermittent_6</option>
+          <option value="intermittent_8">intermittent_8</option>
+        </select>
+      </div>
+
+      <!-- Submit Button -->
+      <div class="text-center">
+        <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+          Process Data
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- JavaScript: Dynamic Addition of Criteria & Alternatives Rows -->
+  <script>
+    // Default arrays for criteria and alternatives.
+    let defaultCriteria = ["Response Time", "Throughput", "Latency", "Network Load"];
+    let defaultAlternatives = ["Homepage", "Login", "Add to Cart", "View Details"];
+    const weightOptions = [
+      "equally_important",
+      "weakly_more_important",
+      "fairly_more_important",
+      "strongly_more_important",
+      "absolutely_more_important",
+      "intermittent_2",
+      "intermittent_4",
+      "intermittent_6",
+      "intermittent_8"
+    ];
+
+    // Add a criteria row. If customName is provided, it is added as the selected option.
+    function addCriteriaRow(customName = null) {
+      const container = document.getElementById("criteria-container");
+      const row = createRow(defaultCriteria, customName, "criteria");
+      container.appendChild(row);
+    }
+
+    // Add a custom criterion via prompt.
+    function addCustomCriteria() {
+      const customName = prompt("Please enter the name of the custom criterion:");
+      if (customName && customName.trim() !== "") {
+        const sanitized = customName.toLowerCase().replace(/\s+/g, "_");
+        // Check if it already exists.
+        if (defaultCriteria.some(c => c.toLowerCase().replace(/\s+/g, "_") === sanitized)) {
+          alert("This criterion already exists. Try a different name.");
+          return;
+        }
+        defaultCriteria.push(customName);
+        addCriteriaRow(customName);
+      } else {
+        alert("Invalid criterion name.");
+      }
+    }
+
+    // Add an alternative row.
+    function addAlternativeRow(customName = null) {
+      const container = document.getElementById("alternatives-container");
+      const row = createRow(defaultAlternatives, customName, "alternatives");
+      container.appendChild(row);
+    }
+
+    // Add a custom alternative via prompt.
+    function addCustomAlternative() {
+      const customName = prompt("Please enter the name of the custom alternative:");
+      if (customName && customName.trim() !== "") {
+        const sanitized = customName.toLowerCase().replace(/\s+/g, "_");
+        if (defaultAlternatives.some(a => a.toLowerCase().replace(/\s+/g, "_") === sanitized)) {
+          alert("This alternative already exists. Try a different name.");
+          return;
+        }
+        defaultAlternatives.push(customName);
+        addAlternativeRow(customName);
+      } else {
+        alert("Invalid alternative name.");
+      }
+    }
+
+    // Generic function to create a new row for criteria or alternatives.
+    // fieldPrefix is "criteria" or "alternatives".
+    function createRow(sourceArray, customName, fieldPrefix) {
+      const row = document.createElement("div");
+      row.className = "flex items-center space-x-4 mb-4";
+
+      // Create select for the main item.
+      const select = document.createElement("select");
+      select.className = "p-2 border border-gray-300 rounded criteria-select";
+      select.name = fieldPrefix; // so that request.form.getlist(fieldPrefix) gathers these values.
+
+      // Populate options from sourceArray.
+      sourceArray.forEach(item => {
+        const opt = document.createElement("option");
+        // Use the exact text (with proper casing) as value to match DataFrame column names
+        opt.value = item;
+        opt.textContent = item;
+        select.appendChild(opt);
+      });
+
+      // If customName is provided, add it as an option and select it.
+      if (customName) {
+        const opt = document.createElement("option");
+        opt.value = customName;
+        opt.textContent = customName;
+        opt.selected = true;
+        select.appendChild(opt);
+      }
+
+      // Create select for the weight.
+      const weightSelect = document.createElement("select");
+      weightSelect.className = "p-2 border border-gray-300 rounded";
+      // Give a unique name for the weight field.
+      weightSelect.name = `weight_${fieldPrefix}_${Date.now()}`;
+      weightOptions.forEach(optionText => {
+        const opt = document.createElement("option");
+        opt.value = optionText;
+        opt.textContent = optionText;
+        weightSelect.appendChild(opt);
+      });
+
+      // Create a remove button.
+      const removeBtn = document.createElement("button");
+      removeBtn.type = "button";
+      removeBtn.textContent = "Remove";
+      removeBtn.className = "px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700";
+      removeBtn.addEventListener("click", () => {
+        row.remove();
+      });
+
+      row.appendChild(select);
+      row.appendChild(weightSelect);
+      row.appendChild(removeBtn);
+      return row;
+    }
+
+    // Optionally, add one initial row for each section on page load.
+    window.onload = function() {
+      addCriteriaRow();
+      addAlternativeRow();
+    };
+  </script>
+</body>
+</html>

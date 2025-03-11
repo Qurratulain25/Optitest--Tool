@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>FAHP Results Report - Optitest+</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* Basic styling for the results table */
+    table.results-table {
+      border-collapse: collapse;
+      width: 100%;
+    }
+    table.results-table th,
+    table.results-table td {
+      border: 1px solid #e2e8f0; /* tailwind border-gray-200 */
+      padding: 8px;
+      text-align: center;
+    }
+    table.results-table thead {
+      background-color: #f8fafc; /* tailwind bg-gray-100 */
+    }
+    /* Class to hide extra rows */
+    .hidden-row {
+      display: none;
+    }
+  </style>
+</head>
+<body class="bg-white text-gray-900 min-h-screen flex flex-col">
+
+
+  <!-- Top Navigation / Header -->
+  <header class="bg-white border-b border-gray-200 shadow-md">
+    <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+      <!-- Logo + Tool Name (Left Corner) -->
+      <div class="flex items-center space-x-4">
+        <img 
+          src="{{ url_for('static', filename='logo_optitest.png') }}"
+          alt="Optitest Logo"
+          class="w-20 h-20 object-cover"
+        >
+        <h1 class="text-3xl font-bold">Optitest+</h1>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <div class="flex flex-1">
+    <!-- Sidebar -->
+    <aside class="hidden md:flex flex-col w-64 bg-white border-r border-gray-200 shadow-md">
+      <nav class="flex-1 p-6 space-y-4">
+        <ul class="space-y-3 text-lg font-medium">
+          <li>
+            <a href="{{ url_for('dashboard') }}" class="block p-3 rounded-lg hover:bg-gray-100 flex items-center">
+              🏠 Opti Home
+            </a>
+          </li>
+          <li>
+            <a href="{{ url_for('preprocessing_page') }}" class="block p-3 rounded-lg hover:bg-gray-100 flex items-center">
+              ⚙️ Preprocessing
+            </a>
+          </li>
+          <li>
+            <a href="{{ url_for('results') }}" class="block p-3 rounded-lg bg-gray-100 flex items-center">
+              📊 Results
+            </a>
+          </li>
+        </ul>
+      </nav>
+      <div class="p-6 border-t border-gray-200 text-sm text-gray-400">
+        © 2025 Optitest
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 p-6">
+      <div class="bg-white rounded shadow p-6">
+
+        <h1 class="text-3xl font-bold mb-4">FAHP Results Report</h1>
+
+        <!-- Section 1: Dataset & Preprocessing Report -->
+        <section class="mb-6 border-b pb-4">
+          <h2 class="text-2xl font-bold mb-2">Dataset & Preprocessing</h2>
+          <p class="text-lg text-gray-700">
+            <strong>Dataset Name:</strong> {{ dataset_name }}
+          </p>
+          <p class="text-lg text-gray-700 mt-1">
+            <strong>Preprocessing Steps Chosen:</strong>
+            {% if preprocessing_steps is iterable %}
+              {{ preprocessing_steps|join(', ') }}
+            {% else %}
+              {{ preprocessing_steps }}
+            {% endif %}
+          </p>
+        </section>
+
+        <!-- Section 2: Criteria & Alternatives Report -->
+        <section class="mb-6 border-b pb-4">
+          <h2 class="text-2xl font-bold mb-2">Criteria & Alternatives</h2>
+          <p class="text-lg text-gray-700">
+            <strong>Selected Criteria:</strong> {{ selected_criteria|join(', ') }}
+          </p>
+          <p class="text-lg text-gray-700 mt-1">
+            <strong>Selected Alternatives:</strong> {{ selected_alternatives|join(', ') }}
+          </p>
+          <div class="mt-4">
+            <h3 class="text-xl font-semibold mb-2">Assigned Weights Matrix</h3>
+            <div class="overflow-x-auto">
+              <div id="rankingTableContainer">
+                {{ weights_table|safe }}
+              </div>
+            </div>
+            <!-- Show More Button -->
+            <button
+              id="showMoreBtn"
+              class="bg-blue-600 text-white px-4 py-2 rounded mt-2"
+            >
+              Show More
+            </button>
+          </div>
+        </section>
+
+        <section class="mb-6 border-b pb-4">
+          <h2 class="text-2xl font-bold mb-2">FAHP Process Details</h2>
+          <div class="text-lg text-gray-700">
+            {{ fahp_details|safe }}
+          </div>
+        </section>
+        
+
+        <!-- Section 4: Optimization Metrics -->
+        <section class="mb-6 border-b pb-4">
+          <h2 class="text-2xl font-bold mb-4">Optimization Metrics</h2>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="p-4 bg-gray-50 rounded shadow">
+              <p class="text-gray-700">Original Suite Size:</p>
+              <p class="text-2xl font-bold">{{ original_size }}</p>
+            </div>
+            <div class="p-4 bg-gray-50 rounded shadow">
+              <p class="text-gray-700">Optimized Suite Size:</p>
+              <p class="text-2xl font-bold">{{ optimized_size }}</p>
+            </div>
+            <div class="p-4 bg-gray-50 rounded shadow">
+              <p class="text-gray-700">Reduction Percentage:</p>
+              <p class="text-2xl font-bold">{{ reduction_pct }}%</p>
+            </div>
+            <div class="p-4 bg-gray-50 rounded shadow">
+              <p class="text-gray-700">Coverage Retained:</p>
+              <p class="text-2xl font-bold">{{ coverage_pct }}%</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Section 5: Visualization -->
+        <section class="mb-6">
+          {% if graph_path %}
+            <img src="{{ url_for('static', filename=graph_path) }}"
+                alt="FAHP Score Distribution"
+                class="w-full rounded shadow">
+          {% else %}
+            <p class="text-red-500">⚠️ Graph could not be generated.</p>
+          {% endif %}
+
+        </section>
+
+        <!-- Back Button -->
+        <div class="mt-6 text-center">
+          <a href="/"
+             class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+          >
+            Back to Form
+          </a>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- JavaScript to show only 5 rows initially, then reveal more on click -->
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const container = document.getElementById("rankingTableContainer");
+      const table =
+        container.querySelector("table.results-table") ||
+        container.querySelector("table");
+      if (!table) return;
+
+      const tbody = table.querySelector("tbody");
+      if (!tbody) return;
+
+      const rows = tbody.querySelectorAll("tr");
+      const showMoreBtn = document.getElementById("showMoreBtn");
+
+      let visibleCount = 5; // Show 5 rows initially
+      rows.forEach((row, index) => {
+        if (index >= visibleCount) {
+          row.classList.add("hidden-row");
+        }
+      });
+
+      let expanded = false;
+      showMoreBtn.addEventListener("click", () => {
+        if (!expanded) {
+          // Show all hidden rows
+          rows.forEach((row) => row.classList.remove("hidden-row"));
+          showMoreBtn.textContent = "Show Less";
+          expanded = true;
+        } else {
+          // Re-hide rows beyond 5
+          rows.forEach((row, index) => {
+            if (index >= visibleCount) row.classList.add("hidden-row");
+          });
+          showMoreBtn.textContent = "Show More";
+          expanded = false;
+        }
+      });
+    });
+  </script>
+</body>
+</html>
